@@ -1,0 +1,160 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("/assets/fonts/Fraunces.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Off-White background: #F8FAF5 */
+    --background: 0.98 0.01 140;
+    --foreground: 0.18 0.04 145;
+
+    /* Card: clean off-white with slight warmth */
+    --card: 0.99 0.006 120;
+    --card-foreground: 0.18 0.04 145;
+
+    --popover: 0.99 0.006 120;
+    --popover-foreground: 0.18 0.04 145;
+
+    /* Primary: Forest Green #228B22 */
+    --primary: 0.42 0.15 142;
+    --primary-foreground: 0.98 0.01 140;
+
+    /* Secondary: soft sage tint */
+    --secondary: 0.93 0.03 142;
+    --secondary-foreground: 0.32 0.1 142;
+
+    /* Muted */
+    --muted: 0.94 0.015 140;
+    --muted-foreground: 0.52 0.04 145;
+
+    /* Accent: Medical Blue #0077B6 */
+    --accent: 0.47 0.14 232;
+    --accent-foreground: 0.98 0.01 140;
+
+    /* CTA Orange #F97316 */
+    --cta: 0.72 0.19 50;
+    --cta-foreground: 0.99 0 0;
+
+    --destructive: 0.5 0.2 25;
+    --destructive-foreground: 0.98 0 0;
+
+    --border: 0.89 0.025 140;
+    --input: 0.89 0.025 140;
+    --ring: 0.42 0.15 142;
+
+    --radius: 0.875rem;
+
+    --chart-1: 0.42 0.15 142;
+    --chart-2: 0.47 0.14 232;
+    --chart-3: 0.72 0.19 50;
+    --chart-4: 0.6 0.1 145;
+    --chart-5: 0.55 0.12 232;
+
+    --sidebar: 0.95 0.02 140;
+    --sidebar-foreground: 0.18 0.04 145;
+    --sidebar-primary: 0.42 0.15 142;
+    --sidebar-primary-foreground: 0.98 0.01 140;
+    --sidebar-accent: 0.91 0.035 140;
+    --sidebar-accent-foreground: 0.32 0.1 142;
+    --sidebar-border: 0.89 0.025 140;
+    --sidebar-ring: 0.42 0.15 142;
+    --admin-bg: 0.97 0.008 145;
+    --admin-surface: 1 0 0;
+    --admin-border: 0.91 0.015 142;
+    --admin-fg: 0.18 0.04 145;
+    --admin-muted: 0.52 0.04 145;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+  }
+  .font-body {
+    font-family: "Poppins", sans-serif;
+  }
+}
+
+/* ── Leaf Texture ─────────────────────────────────────────────── */
+.leaf-texture {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cellipse cx='40' cy='40' rx='8' ry='20' fill='none' stroke='%23228B22' stroke-width='1' opacity='0.06' transform='rotate(-30 40 40)'/%3E%3Cellipse cx='20' cy='20' rx='5' ry='13' fill='none' stroke='%23228B22' stroke-width='1' opacity='0.04' transform='rotate(20 20 20)'/%3E%3Cellipse cx='65' cy='60' rx='6' ry='15' fill='none' stroke='%23228B22' stroke-width='1' opacity='0.05' transform='rotate(-45 65 60)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+}
+
+/* ── Water Drop Texture ───────────────────────────────────────── */
+.water-drop-texture {
+  background-image: radial-gradient(
+      ellipse 12px 18px at 20% 30%,
+      oklch(0.47 0.14 232 / 0.06) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 10px 15px at 70% 65%,
+      oklch(0.47 0.14 232 / 0.05) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 8px 12px at 50% 10%,
+      oklch(0.42 0.15 142 / 0.04) 0%,
+      transparent 100%
+    );
+  background-size: 120px 120px;
+  background-repeat: repeat;
+}
+
+/* ── Organic Section ─────────────────────────────────────────── */
+.organic-section {
+  background-color: oklch(0.96 0.02 142);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cellipse cx='40' cy='40' rx='8' ry='20' fill='none' stroke='%23228B22' stroke-width='1' opacity='0.06' transform='rotate(-30 40 40)'/%3E%3Cellipse cx='20' cy='20' rx='5' ry='13' fill='none' stroke='%23228B22' stroke-width='1' opacity='0.04' transform='rotate(20 20 20)'/%3E%3Cellipse cx='65' cy='60' rx='6' ry='15' fill='none' stroke='%23228B22' stroke-width='1' opacity='0.05' transform='rotate(-45 65 60)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+}
+
+/* ── Hero Gradient ───────────────────────────────────────────── */
+.hero-gradient {
+  background: linear-gradient(
+    145deg,
+    oklch(0.98 0.01 140) 0%,
+    oklch(0.95 0.03 142) 45%,
+    oklch(0.91 0.05 148) 100%
+  );
+}
+
+/* ── Section Alt (sage) ───────────────────────────────────────── */
+.section-alt {
+  background-color: oklch(0.96 0.02 142);
+}
+
+/* ── Orange CTA button ───────────────────────────────────────── */
+.btn-orange {
+  background-color: oklch(0.72 0.19 50);
+  color: #fff;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.btn-orange:hover {
+  opacity: 0.88;
+}
