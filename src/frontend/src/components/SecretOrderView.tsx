@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type OrderStatus = "Placed" | "Packed" | "Shipped" | "Delivered";
 
@@ -13,6 +13,8 @@ interface LocalOrder {
   total: number;
   date: string;
   status: OrderStatus;
+  paymentMode: string;
+  verified: boolean;
 }
 
 const STATUS_OPTIONS: OrderStatus[] = [
@@ -33,7 +35,10 @@ const PASSWORD = "741571";
 const STORAGE_KEY = "fk_orders";
 
 export function saveOrderToStorage(
-  order: Omit<LocalOrder, "id" | "date" | "status">,
+  order: Omit<
+    LocalOrder,
+    "id" | "date" | "status" | "paymentMode" | "verified"
+  >,
 ) {
   const existing: LocalOrder[] = JSON.parse(
     localStorage.getItem(STORAGE_KEY) || "[]",
@@ -43,6 +48,8 @@ export function saveOrderToStorage(
     id: Date.now().toString(),
     date: new Date().toLocaleString("en-IN"),
     status: "Placed",
+    paymentMode: "COD",
+    verified: false,
   };
   existing.unshift(newOrder);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
@@ -55,6 +62,20 @@ export default function SecretOrderView() {
   const [wrongPassword, setWrongPassword] = useState(false);
   const [orders, setOrders] = useState<LocalOrder[]>([]);
 
+  const loadOrders = useCallback(() => {
+    const stored: LocalOrder[] = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || "[]",
+    );
+    setOrders(stored);
+  }, []);
+
+  useEffect(() => {
+    if (!unlocked) return;
+    loadOrders();
+    const interval = setInterval(loadOrders, 3000);
+    return () => clearInterval(interval);
+  }, [unlocked, loadOrders]);
+
   function handleTrigger() {
     setTriggered(true);
   }
@@ -62,10 +83,6 @@ export default function SecretOrderView() {
   function handleUnlock(e: React.FormEvent) {
     e.preventDefault();
     if (passwordInput === PASSWORD) {
-      const stored: LocalOrder[] = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) || "[]",
-      );
-      setOrders(stored);
       setUnlocked(true);
       setWrongPassword(false);
     } else {
@@ -75,6 +92,14 @@ export default function SecretOrderView() {
 
   function updateStatus(id: string, status: OrderStatus) {
     const updated = orders.map((o) => (o.id === id ? { ...o, status } : o));
+    setOrders(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  }
+
+  function markVerified(id: string) {
+    const updated = orders.map((o) =>
+      o.id === id ? { ...o, verified: true } : o,
+    );
     setOrders(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   }
@@ -136,17 +161,27 @@ export default function SecretOrderView() {
               <h2 className="font-bold text-xl text-gray-800">
                 📦 Order List ({orders.length})
               </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setUnlocked(false);
-                  setTriggered(false);
-                  setPasswordInput("");
-                }}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                बंद करें
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  data-ocid="secret.secondary_button"
+                  onClick={loadOrders}
+                  className="text-xs bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 px-3 py-1.5 rounded-full font-semibold transition-colors"
+                >
+                  🔄 Refresh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnlocked(false);
+                    setTriggered(false);
+                    setPasswordInput("");
+                  }}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  बंद करें
+                </button>
+              </div>
             </div>
 
             {orders.length === 0 ? (
@@ -166,9 +201,21 @@ export default function SecretOrderView() {
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                       <div>
-                        <p className="font-bold text-gray-800 text-base">
-                          {order.name}
-                        </p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-bold text-gray-800 text-base">
+                            {order.name}
+                          </p>
+                          {!order.verified && (
+                            <span className="inline-block bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full border border-red-300 animate-pulse">
+                              🆕 New
+                            </span>
+                          )}
+                          {order.verified && (
+                            <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-green-300">
+                              ✅ Verified
+                            </span>
+                          )}
+                        </div>
                         <p className="text-gray-500 text-sm">
                           📱 {order.mobile}
                         </p>
@@ -177,7 +224,12 @@ export default function SecretOrderView() {
                         <p className="font-bold text-green-700">
                           ₹{order.total}
                         </p>
-                        <p className="text-xs text-gray-400">{order.date}</p>
+                        <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-green-200">
+                          💵 {order.paymentMode || "COD"}
+                        </span>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {order.date}
+                        </p>
                       </div>
                     </div>
 
@@ -189,7 +241,7 @@ export default function SecretOrderView() {
                     </p>
 
                     {/* Status buttons */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
                       {STATUS_OPTIONS.map((s) => (
                         <button
                           key={s}
@@ -206,6 +258,18 @@ export default function SecretOrderView() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Verify button */}
+                    {!order.verified && (
+                      <button
+                        type="button"
+                        data-ocid={`secret.order.confirm_button.${idx + 1}`}
+                        onClick={() => markVerified(order.id)}
+                        className="px-4 py-1.5 rounded-full border text-xs font-bold bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 transition-colors"
+                      >
+                        📞 Mark as Verified
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

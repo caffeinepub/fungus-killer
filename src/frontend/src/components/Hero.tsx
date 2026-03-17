@@ -93,7 +93,7 @@ export default function Hero() {
           <div className="relative">
             <div className="absolute inset-0 rounded-[2rem] bg-primary/10 blur-2xl scale-105" />
             <img
-              src="/assets/uploads/IMG_20260315_123100-2.png"
+              src="/assets/generated/fungus-killer-product.dim_800x600.jpg"
               alt="Fungus Killer Product"
               className="relative rounded-[2rem] shadow-nature w-full max-w-lg object-cover"
             />

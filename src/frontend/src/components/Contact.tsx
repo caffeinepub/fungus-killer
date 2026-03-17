@@ -10,10 +10,10 @@ import {
   Loader2,
   Mail,
   MapPin,
-  MessageCircle,
   Package,
   Phone,
-  Smartphone,
+  ShieldCheck,
+  Truck,
   User,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -28,8 +28,10 @@ export default function Contact() {
   const [quantity, setQuantity] = useState("1");
   const [mobileError, setMobileError] = useState("");
   const [pincodeError, setPincodeError] = useState("");
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [successName, setSuccessName] = useState("");
 
-  const { mutate, isPending, isSuccess, isError, error } = useSubmitOrder();
+  const { mutate, isPending, isError, error } = useSubmitOrder();
 
   function handleMobileChange(val: string) {
     const digits = val.replace(/\D/g, "").slice(0, 10);
@@ -62,30 +64,107 @@ export default function Contact() {
       return;
     }
     const qty = Number.parseInt(quantity);
+    const capturedName = fullName;
+    const capturedMobile = mobile;
     mutate(
-      { name: fullName, mobile, address, city, pincode, quantity: qty },
+      {
+        name: capturedName,
+        mobile: capturedMobile,
+        address,
+        city,
+        pincode,
+        quantity: qty,
+      },
       {
         onSuccess: () => {
-          // Save order locally so SecretOrderView can display it
           saveOrderToStorage({
-            name: fullName,
-            mobile,
+            name: capturedName,
+            mobile: capturedMobile,
             address,
             city,
             pincode,
             quantity: qty,
             total: qty * 149,
           });
+
+          // Store mobile for auto-fill in tracking
+          sessionStorage.setItem("fk_track_mobile", capturedMobile);
+
+          // Reset form
+          setSuccessName(capturedName);
+          setFullName("");
+          setMobile("");
+          setAddress("");
+          setCity("");
+          setPincode("");
+          setQuantity("1");
+
+          // Show success banner and scroll to tracking
+          setOrderSuccess(true);
+          setTimeout(() => {
+            const el = document.getElementById("track-order");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }, 800);
         },
       },
     );
   }
 
-  const whatsappNumber = "7049817697";
-  const whatsappUrl = `https://wa.me/91${whatsappNumber}?text=Hello%2C%20I%20am%20interested%20in%20Fungus%20Killer`;
-
   const totalPrice = quantity ? Number.parseInt(quantity) * 149 : 149;
 
+  // --- Order Success Banner ---
+  if (orderSuccess) {
+    return (
+      <section id="contact" className="py-24 organic-section">
+        <div className="container mx-auto px-6 max-w-lg">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            data-ocid="contact.success_state"
+            className="bg-white rounded-3xl shadow-xl border border-green-200 p-8 text-center space-y-6"
+          >
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl font-bold text-gray-800 mb-2">
+                बधाई हो! 🎉
+              </h2>
+              <p className="text-gray-600 text-base">
+                {successName} जी, आपका ऑर्डर सफलतापूर्वक दर्ज कर लिया गया है।
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                हमारी टीम जल्द ही आपसे contact करेगी।
+              </p>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+              <p className="text-green-800 font-semibold text-sm">
+                📦 नीचे आप अपना Live Order Status देख सकते हैं।
+              </p>
+            </div>
+            <button
+              type="button"
+              data-ocid="contact.tracking_button"
+              onClick={() => {
+                setOrderSuccess(false);
+                const el = document.getElementById("track-order");
+                if (el)
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="w-full py-4 px-6 rounded-3xl font-semibold text-white text-base bg-green-700 hover:bg-green-800 transition-colors"
+            >
+              📦 अपना Order Track करें →
+            </button>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Order Form ---
   return (
     <section id="contact" className="py-24 organic-section">
       <div className="container mx-auto px-6">
@@ -130,12 +209,6 @@ export default function Contact() {
             <div className="space-y-4">
               {[
                 {
-                  icon: MessageCircle,
-                  label: "WhatsApp Order",
-                  value: whatsappNumber,
-                  color: "bg-primary/10 text-primary",
-                },
-                {
                   icon: Mail,
                   label: "Email",
                   value: "anupamn699@gmail.com",
@@ -154,10 +227,10 @@ export default function Contact() {
                   color: "bg-cta/10 text-cta",
                 },
                 {
-                  icon: Smartphone,
+                  icon: Truck,
                   label: "Payment",
-                  value: "PhonePe / Paytm / Pay on Delivery",
-                  color: "bg-accent/15 text-accent",
+                  value: "Cash on Delivery (COD) — सामान मिलने पर पैसे दें",
+                  color: "bg-green-100 text-green-700",
                 },
               ].map(({ icon: Icon, label, value, color }) => (
                 <div key={label} className="flex items-center gap-4">
@@ -175,19 +248,6 @@ export default function Contact() {
                 </div>
               ))}
             </div>
-
-            {/* WhatsApp CTA */}
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              data-ocid="contact.primary_button"
-              className="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-3xl font-semibold text-white text-base shadow-nature transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#25D366" }}
-            >
-              <MessageCircle className="w-5 h-5" />
-              Chat on WhatsApp: {whatsappNumber}
-            </a>
 
             <div className="p-5 rounded-3xl bg-primary/8 border border-primary/20">
               <p className="text-primary font-semibold text-sm mb-1">
@@ -208,274 +268,281 @@ export default function Contact() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            {isSuccess ? (
-              <div
-                data-ocid="contact.success_state"
-                className="bg-card rounded-3xl p-10 shadow-nature border border-border flex flex-col items-center text-center h-full justify-center gap-5"
-              >
-                <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
-                  <CheckCircle2 className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-display text-2xl font-bold text-foreground">
-                  ऑर्डर मिल गया! 🎉
+            <form
+              onSubmit={handleSubmit}
+              className="bg-card rounded-3xl p-8 shadow-nature border border-border space-y-5"
+            >
+              <div className="pb-2 border-b border-border">
+                <h3 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  Professional Order Form
                 </h3>
-                <p className="text-muted-foreground">
-                  आपका ऑर्डर हमें मिल गया है, हम जल्द ही आपको ईमेल या फोन पर सूचना देंगे।
+                <p className="text-muted-foreground text-sm mt-1">
+                  सभी fields भरना अनिवार्य है।
                 </p>
               </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="bg-card rounded-3xl p-8 shadow-nature border border-border space-y-5"
-              >
-                <div className="pb-2 border-b border-border">
-                  <h3 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
-                    <Package className="w-5 h-5 text-primary" />
-                    Professional Order Form
-                  </h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    सभी fields भरना अनिवार्य है।
+
+              {/* Trust Badge */}
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-2xl px-4 py-2.5">
+                <ShieldCheck className="w-5 h-5 text-green-600 shrink-0" />
+                <div>
+                  <p className="text-green-800 font-semibold text-sm">
+                    Secure COD — Cash on Delivery
+                  </p>
+                  <p className="text-green-600 text-xs">
+                    सामान मिलने पर पैसे दें — 100% Safe & Trusted
                   </p>
                 </div>
+              </div>
 
-                {/* Full Name */}
+              {/* Full Name */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="fullName"
+                  className="text-foreground font-medium flex items-center gap-1.5"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  पूरा नाम{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Full Name)
+                  </span>
+                </Label>
+                <Input
+                  id="fullName"
+                  data-ocid="contact.input"
+                  placeholder="अपना पूरा नाम लिखें"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="border-border focus:border-primary rounded-xl"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="mobile"
+                  className="text-foreground font-medium flex items-center gap-1.5"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  मोबाइल नंबर{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Mobile Number)
+                  </span>
+                </Label>
+                <Input
+                  id="mobile"
+                  data-ocid="contact.search_input"
+                  placeholder="10-digit mobile number"
+                  value={mobile}
+                  onChange={(e) => handleMobileChange(e.target.value)}
+                  required
+                  inputMode="numeric"
+                  maxLength={10}
+                  className={`border-border focus:border-primary rounded-xl ${
+                    mobileError ? "border-destructive" : ""
+                  }`}
+                />
+                {mobileError && (
+                  <p
+                    data-ocid="contact.error_state"
+                    className="text-destructive text-xs flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-3 h-3" /> {mobileError}
+                  </p>
+                )}
+              </div>
+
+              {/* Complete Address */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="address"
+                  className="text-foreground font-medium flex items-center gap-1.5"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  पूरा पता{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Complete Address)
+                  </span>
+                </Label>
+                <Input
+                  id="address"
+                  data-ocid="contact.textarea"
+                  placeholder="House No., Street, Landmark"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                  className="border-border focus:border-primary rounded-xl"
+                />
+              </div>
+
+              {/* City & Pincode */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label
-                    htmlFor="fullName"
-                    className="text-foreground font-medium flex items-center gap-1.5"
+                    htmlFor="city"
+                    className="text-foreground font-medium text-sm"
                   >
-                    <User className="w-3.5 h-3.5" />
-                    पूरा नाम{" "}
+                    शहर{" "}
                     <span className="text-muted-foreground font-normal">
-                      (Full Name)
+                      (City)
                     </span>
                   </Label>
                   <Input
-                    id="fullName"
-                    data-ocid="contact.input"
-                    placeholder="अपना पूरा नाम लिखें"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    id="city"
+                    data-ocid="order.city.input"
+                    placeholder="शहर का नाम"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
                     required
                     className="border-border focus:border-primary rounded-xl"
                   />
                 </div>
-
-                {/* Mobile Number */}
                 <div className="space-y-1.5">
                   <Label
-                    htmlFor="mobile"
-                    className="text-foreground font-medium flex items-center gap-1.5"
+                    htmlFor="pincode"
+                    className="text-foreground font-medium text-sm"
                   >
-                    <Phone className="w-3.5 h-3.5" />
-                    मोबाइल नंबर{" "}
+                    पिनकोड{" "}
                     <span className="text-muted-foreground font-normal">
-                      (Mobile Number)
+                      (Pincode)
                     </span>
                   </Label>
                   <Input
-                    id="mobile"
-                    data-ocid="contact.search_input"
-                    placeholder="10-digit mobile number"
-                    value={mobile}
-                    onChange={(e) => handleMobileChange(e.target.value)}
+                    id="pincode"
+                    data-ocid="order.pincode.input"
+                    placeholder="6-digit pincode"
+                    value={pincode}
+                    onChange={(e) => handlePincodeChange(e.target.value)}
                     required
                     inputMode="numeric"
-                    maxLength={10}
+                    maxLength={6}
                     className={`border-border focus:border-primary rounded-xl ${
-                      mobileError ? "border-destructive" : ""
+                      pincodeError ? "border-destructive" : ""
                     }`}
                   />
-                  {mobileError && (
+                  {pincodeError && (
                     <p className="text-destructive text-xs flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> {mobileError}
+                      <AlertCircle className="w-3 h-3" /> {pincodeError}
                     </p>
                   )}
                 </div>
+              </div>
 
-                {/* Complete Address */}
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="address"
-                    className="text-foreground font-medium flex items-center gap-1.5"
-                  >
-                    <MapPin className="w-3.5 h-3.5" />
-                    पूरा पता{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Complete Address)
-                    </span>
-                  </Label>
-                  <Input
-                    id="address"
-                    data-ocid="contact.textarea"
-                    placeholder="House No., Street, Landmark"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
-                    className="border-border focus:border-primary rounded-xl"
-                  />
-                </div>
-
-                {/* City & Pincode */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="city"
-                      className="text-foreground font-medium text-sm"
-                    >
-                      शहर{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (City)
-                      </span>
-                    </Label>
-                    <Input
-                      id="city"
-                      data-ocid="order.city.input"
-                      placeholder="शहर का नाम"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                      className="border-border focus:border-primary rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="pincode"
-                      className="text-foreground font-medium text-sm"
-                    >
-                      पिनकोड{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (Pincode)
-                      </span>
-                    </Label>
-                    <Input
-                      id="pincode"
-                      data-ocid="order.pincode.input"
-                      placeholder="6-digit pincode"
-                      value={pincode}
-                      onChange={(e) => handlePincodeChange(e.target.value)}
-                      required
-                      inputMode="numeric"
-                      maxLength={6}
-                      className={`border-border focus:border-primary rounded-xl ${
-                        pincodeError ? "border-destructive" : ""
-                      }`}
-                    />
-                    {pincodeError && (
-                      <p className="text-destructive text-xs flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> {pincodeError}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quantity */}
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="quantity"
-                    className="text-foreground font-medium flex items-center gap-1.5"
-                  >
-                    <Package className="w-3.5 h-3.5" />
-                    मात्रा{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Quantity)
-                    </span>
-                  </Label>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuantity(
-                          String(Math.max(1, Number.parseInt(quantity) - 1)),
-                        )
-                      }
-                      className="w-10 h-10 rounded-xl border border-border bg-background text-foreground font-bold text-lg hover:bg-muted transition-colors flex items-center justify-center"
-                    >
-                      −
-                    </button>
-                    <Input
-                      id="quantity"
-                      data-ocid="order.quantity.input"
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={quantity}
-                      onChange={(e) =>
-                        setQuantity(
-                          String(
-                            Math.max(1, Number.parseInt(e.target.value) || 1),
-                          ),
-                        )
-                      }
-                      required
-                      className="border-border focus:border-primary rounded-xl text-center font-bold text-lg w-20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuantity(
-                          String(Math.min(50, Number.parseInt(quantity) + 1)),
-                        )
-                      }
-                      className="w-10 h-10 rounded-xl border border-border bg-background text-foreground font-bold text-lg hover:bg-muted transition-colors flex items-center justify-center"
-                    >
-                      +
-                    </button>
-                    <span className="text-muted-foreground text-sm">
-                      bottle(s)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Price Summary */}
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/8 border border-primary/20">
-                  <span className="text-foreground font-medium text-sm">
-                    कुल राशि (Total Amount)
-                  </span>
-                  <span className="text-primary font-bold text-xl">
-                    ₹{totalPrice}
-                  </span>
-                </div>
-
-                <div className="flex items-start gap-2 text-sm text-accent font-medium bg-accent/8 px-4 py-3 rounded-xl border border-accent/20">
-                  <Smartphone className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>
-                    Payment: PhonePe / Paytm / Pay on Delivery &mdash; ₹149 per
-                    box
-                  </span>
-                </div>
-
-                {isError && (
-                  <div
-                    data-ocid="contact.error_state"
-                    className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 px-4 py-3 rounded-xl"
-                  >
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>
-                      {error instanceof Error
-                        ? error.message
-                        : "Something went wrong. Please try again."}
-                    </span>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  data-ocid="contact.submit_button"
-                  disabled={isPending}
-                  className="w-full btn-orange shadow-orange font-semibold py-6 text-base rounded-2xl"
+              {/* Quantity */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="quantity"
+                  className="text-foreground font-medium flex items-center gap-1.5"
                 >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Order भेजा जा रहा है...
-                    </>
-                  ) : (
-                    "🛒 Order अभी करें (Place Order)"
-                  )}
-                </Button>
-              </form>
-            )}
+                  <Package className="w-3.5 h-3.5" />
+                  मात्रा{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (Quantity)
+                  </span>
+                </Label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setQuantity(
+                        String(Math.max(1, Number.parseInt(quantity) - 1)),
+                      )
+                    }
+                    className="w-10 h-10 rounded-xl border border-border bg-background text-foreground font-bold text-lg hover:bg-muted transition-colors flex items-center justify-center"
+                  >
+                    −
+                  </button>
+                  <Input
+                    id="quantity"
+                    data-ocid="order.quantity.input"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={quantity}
+                    onChange={(e) =>
+                      setQuantity(
+                        String(
+                          Math.max(1, Number.parseInt(e.target.value) || 1),
+                        ),
+                      )
+                    }
+                    required
+                    className="border-border focus:border-primary rounded-xl text-center font-bold text-lg w-20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setQuantity(
+                        String(Math.min(50, Number.parseInt(quantity) + 1)),
+                      )
+                    }
+                    className="w-10 h-10 rounded-xl border border-border bg-background text-foreground font-bold text-lg hover:bg-muted transition-colors flex items-center justify-center"
+                  >
+                    +
+                  </button>
+                  <span className="text-muted-foreground text-sm">
+                    bottle(s)
+                  </span>
+                </div>
+              </div>
+
+              {/* Price Summary */}
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/8 border border-primary/20">
+                <span className="text-foreground font-medium text-sm">
+                  कुल राशि (Total Amount)
+                </span>
+                <span className="text-primary font-bold text-xl">
+                  ₹{totalPrice}
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2 text-sm text-green-700 font-medium bg-green-50 px-4 py-3 rounded-xl border border-green-200">
+                <Truck className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  Payment Mode: <strong>Cash on Delivery (COD)</strong> — सामान
+                  मिलने पर पैसे दें
+                </span>
+              </div>
+
+              {isError && (
+                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 px-4 py-3 rounded-xl">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>
+                    {error instanceof Error
+                      ? error.message
+                      : "Something went wrong. Please try again."}
+                  </span>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                data-ocid="contact.submit_button"
+                disabled={isPending}
+                className="w-full btn-orange shadow-orange font-semibold py-6 text-base rounded-2xl"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Order भेजा जा रहा है...
+                  </>
+                ) : (
+                  "Order Now - Pay on Delivery (अभी ऑर्डर करें - सामान मिलने पर पैसे दें)"
+                )}
+              </Button>
+
+              {/* Verification Note */}
+              <div className="flex items-start gap-2 bg-yellow-50 border border-yellow-300 rounded-xl px-4 py-3">
+                <Phone className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+                <p className="text-yellow-800 text-sm">
+                  <strong>
+                    Note: Our team will call you to verify your address. Orders
+                    without phone verification will not be shipped.
+                  </strong>
+                </p>
+              </div>
+            </form>
           </motion.div>
         </div>
       </div>

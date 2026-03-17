@@ -5,10 +5,47 @@ import Int "mo:core/Int";
 import Nat "mo:core/Nat";
 import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
+import Char "mo:core/Char";
 import AccessControl "./authorization/access-control";
+import Outcall "./http-outcalls/outcall";
 import Prim "mo:prim";
 
 actor {
+  // ---- CallMeBot Config ----
+  // To receive automatic WhatsApp notifications:
+  // 1. Open WhatsApp and send "I allow callmebot to send me messages" to +34 644 44 74 45
+  // 2. You will receive your personal API key via WhatsApp
+  // 3. Replace the empty string below with your API key
+  let CALLMEBOT_API_KEY = ""; // <-- Replace with your CallMeBot API key
+  let ADMIN_PHONE = "917049817697";
+
+  // ---- URL Encoder ----
+  func encodeUrlParam(t : Text) : Text {
+    var result = "";
+    for (c in t.chars()) {
+      let code = c.toNat32();
+      if (code < 128) {
+        if (c == ' ') { result #= "%20" }
+        else if (c == '+') { result #= "%2B" }
+        else if (c == '&') { result #= "%26" }
+        else if (c == '=') { result #= "%3D" }
+        else if (c == '#') { result #= "%23" }
+        else if (c == '%') { result #= "%25" }
+        else if (c == '?') { result #= "%3F" }
+        else { result #= Text.fromChar(c) };
+      } else {
+        result #= Text.fromChar(c);
+      };
+    };
+    result;
+  };
+
+  // ---- Transform function for HTTP outcalls ----
+  public query func transform(input : Outcall.TransformationInput) : async Outcall.TransformationOutput {
+    Outcall.transform(input);
+  };
+
   // --- Existing Submission type ---
   type Submission = {
     name : Text;
@@ -93,6 +130,24 @@ actor {
     let newOrder : Order_ = { name; mobile; address; city; pincode; quantity; timestamp };
     ordersMap.add(id, newOrder);
     orderCounter += 1;
+
+    // Send automatic WhatsApp notification to admin (CallMeBot)
+    if (CALLMEBOT_API_KEY != "") {
+      try {
+        let msgText = "New%20Order!%20Name:%20" # encodeUrlParam(name) #
+          "%20%7C%20Mobile:%20" # mobile #
+          "%20%7C%20City:%20" # encodeUrlParam(city) #
+          "%20%7C%20Qty:%20" # quantity.toText() #
+          "%20%7C%20Pincode:%20" # pincode;
+        let url = "https://api.callmebot.com/whatsapp.php?phone=" # ADMIN_PHONE #
+          "&text=" # msgText #
+          "&apikey=" # CALLMEBOT_API_KEY;
+        ignore await Outcall.httpGetRequest(url, [], transform);
+      } catch (_e) {
+        // Notification failed silently - order is already saved
+      };
+    };
+
     id;
   };
 

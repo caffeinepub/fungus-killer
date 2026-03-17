@@ -1,5 +1,5 @@
 import { Box, CheckCircle2, Home, Package, Search, Truck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type OrderStatus = "Placed" | "Packed" | "Shipped" | "Delivered";
 
@@ -48,9 +48,33 @@ export default function OrderTracking() {
   const [order, setOrder] = useState<LocalOrder | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [justOrdered, setJustOrdered] = useState(false);
+
+  // Auto-fill and auto-search if customer just placed an order
+  useEffect(() => {
+    const savedMobile = sessionStorage.getItem("fk_track_mobile");
+    if (savedMobile) {
+      sessionStorage.removeItem("fk_track_mobile");
+      setMobileInput(savedMobile);
+      setJustOrdered(true);
+      // Auto-search
+      const orders: LocalOrder[] = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) || "[]",
+      );
+      const found = orders.find((o) => o.mobile === savedMobile);
+      if (found) {
+        setOrder(found);
+        setNotFound(false);
+      } else {
+        setNotFound(true);
+      }
+      setSearched(true);
+    }
+  }, []);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
+    setJustOrdered(false);
     const orders: LocalOrder[] = JSON.parse(
       localStorage.getItem(STORAGE_KEY) || "[]",
     );
@@ -81,9 +105,19 @@ export default function OrderTracking() {
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mt-2">
             अपना ऑर्डर ट्रैक करें
           </h2>
-          <p className="text-muted-foreground mt-3 text-base">
-            अपना मोबाइल नंबर डालें और अपने ऑर्डर की स्थिति जानें।
-          </p>
+          {justOrdered ? (
+            <div className="mt-3 inline-flex items-center gap-2 bg-green-50 border border-green-300 rounded-2xl px-5 py-2.5">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <p className="text-green-800 font-semibold text-sm">
+                बधाई हो! आपका ऑर्डर सफलतापूर्वक दर्ज कर लिया गया है। नीचे आप लाइव स्टेटस
+                देख सकते हैं।
+              </p>
+            </div>
+          ) : (
+            <p className="text-muted-foreground mt-3 text-base">
+              अपना मोबाइल नंबर डालें और अपने ऑर्डर की स्थिति जानें।
+            </p>
+          )}
         </div>
 
         {/* Mobile Search */}
@@ -101,6 +135,7 @@ export default function OrderTracking() {
             onChange={(e) => {
               setMobileInput(e.target.value.replace(/\D/g, "").slice(0, 10));
               setSearched(false);
+              setJustOrdered(false);
             }}
             data-ocid="tracking.input"
             className="flex-1 border border-green-300 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"

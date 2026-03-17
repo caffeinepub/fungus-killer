@@ -238,13 +238,24 @@ export default function Navbar() {
       }`}
     >
       <nav className="container mx-auto flex items-center justify-between px-6 py-3">
-        <a href="/#" className="flex items-center gap-2 group">
+        {/* Logo — always visible with white pill background */}
+        <a
+          href="/#"
+          className="flex items-center gap-2 group bg-white/95 rounded-2xl px-3 py-1.5 shadow-sm border border-green-100"
+          style={{ backgroundColor: "rgba(255,255,255,0.95)" }}
+        >
           <img
-            src="/assets/uploads/IMG_20260315_123152-1.png"
+            src="/assets/uploads/1773651174046-1.jpg"
             alt="Fungus Killer Logo"
-            className="w-11 h-11 rounded-full object-cover shadow-sm"
+            className="w-10 h-10 rounded-full object-cover shadow-sm border border-green-200"
+            style={{ backgroundColor: "white" }}
+            onError={(e) => {
+              const target = e.currentTarget;
+              target.style.backgroundColor = "#228B22";
+              target.style.display = "flex";
+            }}
           />
-          <span className="font-display text-xl font-bold text-foreground">
+          <span className="font-display text-lg font-bold text-green-800">
             Fungus Killer
           </span>
         </a>
